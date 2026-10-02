@@ -1,8 +1,9 @@
 package com.projeto.cardapio.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import com.projeto.cardapio.entity.Food;
@@ -19,14 +20,19 @@ public class FoodService {
         this.foodRepository = foodRepository;
     }
 
-    public List<FoodResponseDTO> FoodList (){
-        return foodRepository.findAll().stream().map(FoodResponseDTO::new).toList();
+    public Slice<FoodResponseDTO> FoodList (Pageable pageable){
+        Slice<Food> foodSlice = foodRepository.findByActiveTrue(pageable);
+
+        return foodSlice.map(food -> new FoodResponseDTO(
+         food.getId_food(),
+         food.getImage(), 
+         food.getTitle(), 
+         food.getPrice())); /*Slice - Faz a busca paginada direta no SQL (LIMIT/OFFSET), trazendo apenas o pedaço necessário (ex: 10 itens). */
     }
 
     public void cadastrarFoods(List<FoodRequestDTO> foodRequest) {
-        List<Food> food = foodRequest.stream()
-        .map(Food::new)/*.map(Food::new): Transforma cada objeto FoodRequestDTO da lista em uma instância de Food. É a fase de mapeamento/conversão. */ 
-        .collect(Collectors.toList());/*.collect(Collectors.toList()): Agrupa os novos objetos Food transformados e constrói a lista final (List<Food>). É a fase de materialização.*/ 
+        List<Food> food = foodRequest.stream().map(Food::new).toList();
+
         foodRepository.saveAll(food);
         
     }
